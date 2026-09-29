@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Submit Grievance - GrievanceTrack</title>
 
   <style>
@@ -19,59 +20,78 @@
       text-align: center;
     }
 
+    .header h1 {
+      margin: 0;
+    }
+
     .form-container {
       width: 90%;
       max-width: 600px;
       margin: 35px auto;
       background: white;
       padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     }
 
-    h2 {
+    .form-container h2 {
       text-align: center;
       color: #1f4e79;
+      margin-bottom: 25px;
     }
 
     label {
       display: block;
       margin-top: 15px;
       font-weight: bold;
+      color: #333;
     }
 
-    input, textarea, select {
+    input,
+    select,
+    textarea {
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
       box-sizing: border-box;
+      padding: 11px;
+      margin-top: 6px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 6px;
+      font-size: 14px;
     }
 
     textarea {
-      height: 100px;
+      height: 110px;
       resize: vertical;
     }
 
-    button {
+    .submit-btn {
       width: 100%;
       margin-top: 25px;
-      padding: 12px;
+      padding: 13px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       background-color: #1f4e79;
       color: white;
       font-size: 16px;
       cursor: pointer;
     }
 
+    .submit-btn:hover {
+      background-color: #163a5c;
+    }
+
     .back {
       display: block;
       text-align: center;
-      margin-top: 15px;
+      margin-top: 18px;
       color: #1f4e79;
       text-decoration: none;
+    }
+
+    #message {
+      margin-top: 18px;
+      text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -80,43 +100,185 @@
 
 <div class="header">
   <h1>GrievanceTrack</h1>
+  <p>Citizen Complaint Tracking with SLA Escalation</p>
 </div>
 
 <div class="form-container">
 
   <h2>Submit Grievance</h2>
 
-  <form>
-    <label>Citizen Name</label>
-    <input type="text" placeholder="Enter your name">
+  <form id="grievanceForm">
 
-    <label>Email</label>
-    <input type="email" placeholder="Enter your email">
+    <label for="name">Citizen Name</label>
+    <input
+            type="text"
+            id="name"
+            placeholder="Enter your name"
+            required
+    >
 
-    <label>Phone</label>
-    <input type="text" placeholder="Enter your phone number">
+    <label for="email">Email</label>
+    <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            required
+    >
 
-    <label>Category</label>
-    <select>
-      <option>Select Category</option>
-      <option>Road Maintenance</option>
-      <option>Street Light</option>
-      <option>Water Supply</option>
-      <option>Garbage Collection</option>
+    <label for="phone">Phone</label>
+    <input
+            type="text"
+            id="phone"
+            placeholder="Enter your phone number"
+            required
+    >
+
+    <label for="category">Category</label>
+    <select id="category" required>
+      <option value="">Select Category</option>
+      <option value="2">Road Maintenance</option>
     </select>
 
-    <label>Location</label>
-    <input type="text" placeholder="Enter complaint location">
+    <label for="location">Location</label>
+    <input
+            type="text"
+            id="location"
+            placeholder="Enter complaint location"
+            required
+    >
 
-    <label>Complaint Description</label>
-    <textarea placeholder="Describe your grievance"></textarea>
+    <label for="description">Complaint Description</label>
+    <textarea
+            id="description"
+            placeholder="Describe your grievance"
+            required
+    ></textarea>
 
-    <button type="button">Submit Grievance</button>
+    <button
+            type="submit"
+            id="submitBtn"
+            class="submit-btn">
+      Submit Grievance
+    </button>
+
+    <div id="message"></div>
+
   </form>
 
   <a href="/" class="back">← Back to Home</a>
 
 </div>
+
+<script>
+  document.getElementById("grievanceForm").addEventListener("submit", async function (event) {
+
+    event.preventDefault();
+
+    const message = document.getElementById("message");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const categoryId = document.getElementById("category").value;
+    const location = document.getElementById("location").value.trim();
+    const description = document.getElementById("description").value.trim();
+
+    if (!name || !email || !phone || !categoryId || !location || !description) {
+      message.textContent = "Please fill all the fields.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+    message.textContent = "";
+
+    try {
+
+      /* Step 1: Create Citizen */
+
+      const citizenResponse = await fetch("/api/citizens", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          phone: phone
+        })
+      });
+
+      if (!citizenResponse.ok) {
+        const errorText = await citizenResponse.text();
+        throw new Error("Citizen creation failed: " + errorText);
+      }
+
+      const citizen = await citizenResponse.json();
+
+      /* Step 2: Create Grievance */
+
+      const grievanceResponse = await fetch("/api/grievances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          description: description,
+          location: location,
+
+          citizen: {
+            citizenId: citizen.citizenId
+          },
+
+          category: {
+            categoryId: Number(categoryId)
+          },
+
+          department: {
+            departmentId: 2
+          }
+        })
+      });
+
+      if (!grievanceResponse.ok) {
+        const errorText = await grievanceResponse.text();
+        throw new Error("Grievance creation failed: " + errorText);
+      }
+
+      const grievance = await grievanceResponse.json();
+
+      message.textContent =
+              "Grievance submitted successfully! Grievance ID: "
+              + grievance.grievanceId;
+
+      alert(
+              "Grievance submitted successfully!\n\nGrievance ID: "
+              + grievance.grievanceId
+      );
+
+      /* Open View Grievances page */
+
+      window.location.href = "/grievances";
+
+    } catch (error) {
+
+      console.error(error);
+
+      message.textContent =
+              "Unable to submit grievance. Please try again.";
+
+      alert(
+              "Submission failed.\n\n" +
+              error.message
+      );
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Grievance";
+    }
+
+  });
+</script>
 
 </body>
 </html>
