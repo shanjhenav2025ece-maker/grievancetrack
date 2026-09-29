@@ -96,17 +96,38 @@
                 card.className = "grievance";
 
                 card.innerHTML = `
-                    <h3>Grievance #${grievance.grievanceId}</h3>
-                    <p><strong>Description:</strong> ${grievance.description}</p>
-                    <p><strong>Location:</strong> ${grievance.location}</p>
-                    <p class="status">
-                        <strong>Status:</strong> ${grievance.status}
-                    </p>
-                    <p><strong>Category:</strong> ${grievance.category.name}</p>
-                    <p><strong>Department:</strong> ${grievance.department.name}</p>
-                    <p><strong>Created At:</strong> ${grievance.createdAt}</p>
-                `;
+    <h3>Grievance #${grievance.grievanceId}</h3>
 
+    <p>
+        <strong>Description:</strong>
+        ${grievance.description || "Not available"}
+    </p>
+
+    <p>
+        <strong>Location:</strong>
+        ${grievance.location || "Not available"}
+    </p>
+
+    <p class="status">
+        <strong>Status:</strong>
+        ${grievance.status || "Pending"}
+    </p>
+
+    <p>
+        <strong>Category:</strong>
+        ${grievance.category?.name || "Not available"}
+    </p>
+
+    <p>
+        <strong>Department:</strong>
+        ${grievance.department?.name || "Not available"}
+    </p>
+
+    <p>
+        <strong>Created At:</strong>
+        ${grievance.createdAt || "Not available"}
+    </p>
+`;
                 list.appendChild(card);
             });
         })
