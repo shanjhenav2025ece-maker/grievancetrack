@@ -20,4 +20,9 @@ public class HomeController {
     public String grievances() {
         return "grievances";
     }
+
+    @GetMapping("/escalations")
+    public String escalations() {
+        return "escalations";
+    }
 }
